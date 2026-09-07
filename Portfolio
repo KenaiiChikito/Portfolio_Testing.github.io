@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portafolio · Game Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   MAPA DE MUNDO — PORTAFOLIO GAME DEV
+   Guía rápida de edición: busca los bloques "EDITA AQUÍ" en el
+   CONFIG de JavaScript (más abajo) para cambiar todos los textos,
+   imágenes, videos, links y datos de contacto sin tocar el diseño.
+   ============================================================ */
+
+:root{
+  --bg: #0b0a1f;
+  --bg-elevated: #131028;
+  --surface: #1c1839;
+  --surface-2: #241f4a;
+  --line: rgba(140, 107, 255, 0.18);
+  --accent: #8c6bff;
+  --accent-soft: rgba(140, 107, 255, .15);
+  --gold: #ffc93c;
+  --mint: #34e2b8;
+  --pink: #ff5c87;
+  --text: #f4f2ff;
+  --text-muted: #9c97c4;
+  --text-dim: #6f6a94;
+  --radius: 14px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-pixel: 'Press Start 2P', monospace;
+}
+
+*{ box-sizing: border-box; margin:0; padding:0; }
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *{ animation-duration: .001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::selection{ background: var(--accent); color: #0b0a1f; }
+
+a{ color: inherit; text-decoration:none; }
+img{ max-width:100%; display:block; }
+button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+
+.wrap{ max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+/* Fondo estrellado */
+#starfield{
+  position: fixed; inset:0; width:100%; height:100%;
+  z-index: 0; pointer-events:none;
+  background: radial-gradient(ellipse at 20% -10%, #1b1640 0%, var(--bg) 55%);
+}
+
+/* Eyebrow / etiquetas pixel */
+.eyebrow{
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 18px;
+}
+.eyebrow::before{
+  content:"";
+  width:16px; height:16px;
+  background: var(--gold);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  display:inline-block;
+}
+
+h1,h2,h3{ font-family: var(--font-display); font-weight: 700; letter-spacing:-0.01em; }
+
+/* ============ WORLD MAP NAV ============ */
+.world-nav{
+  position: fixed;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap: 0;
+}
+.world-nav svg{ position:absolute; right:9px; top:0; height:100%; width:2px; z-index:-1; overflow:visible; }
+.world-nav .path-line{
+  stroke: var(--line);
+  stroke-width:2;
+  stroke-dasharray: 4 6;
+  fill:none;
+}
+.world-nav .path-progress{
+  stroke: var(--accent);
+  stroke-width:2;
+  fill:none;
+  transition: stroke-dashoffset .15s linear;
+}
+.node-btn{
+  display:flex; align-items:center; gap:10px;
+  padding: 13px 0;
+  position:relative;
+}
+.node-dot{
+  width:18px; height:18px;
+  border-radius:50%;
+  background: var(--bg-elevated);
+  border: 2px solid var(--text-dim);
+  transition: all .25s ease;
+  flex-shrink:0;
+}
+.node-label{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--bg-elevated);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  opacity:0;
+  transform: translateX(6px);
+  transition: all .2s ease;
+  white-space:nowrap;
+}
+.node-btn:hover .node-label,
+.node-btn.active .node-label{ opacity:1; transform:translateX(0); }
+.node-btn.active .node-dot{
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 5px var(--accent-soft);
+}
+.player-marker{
+  position:absolute; right:5px;
+  width:10px; height:10px;
+  background: var(--gold);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  transition: top .15s linear;
+  box-shadow: 0 0 10px var(--gold);
+  z-index:2;
+}
+@media (max-width: 880px){
+  .world-nav{
+    right:0; left:0; top:auto; bottom:0; transform:none;
+    flex-direction:row; justify-content:space-around;
+    background: rgba(11,10,31,.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  }
+  .world-nav svg, .player-marker, .node-label{ display:none; }
+  .node-btn{ padding:6px; flex-direction:column; }
+}
+
+/* ============ HERO ============ */
+.hero{
+  position:relative; z-index:1;
+  min-height: 100svh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center;
+  padding: 100px 24px 60px;
+}
+.hero .tag{
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--mint);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  display:flex; align-items:center; gap:10px;
+}
+.hero .tag::before{
+  content:"●"; color: var(--mint);
+  animation: blink 1.4s infinite;
+}
+@keyframes blink{ 50%{ opacity:.2; } }
+
+.hero h1{
+  font-size: clamp(2.6rem, 8vw, 5.4rem);
+  line-height: 1.02;
+  background: linear-gradient(120deg, #fff 20%, var(--accent) 60%, var(--gold) 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  margin-bottom: 18px;
+}
+.hero .role{
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 2.4vw, 1.3rem);
+  color: var(--text-muted);
+  margin-bottom: 26px;
+}
+.hero .role .cursor{ color:var(--gold); animation: blink 1s steps(1) infinite; }
+.hero p.tagline{
+  max-width: 560px;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  margin-bottom: 40px;
+}
+.press-start{
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: #0b0a1f;
+  background: var(--gold);
+  padding: 18px 36px;
+  border-radius: 50px;
+  box-shadow: 0 0 0 0 rgba(255,201,60,.5);
+  animation: pulse-btn 2.2s infinite;
+  display:inline-flex; align-items:center; gap:12px;
+  transition: transform .2s ease;
+}
+.press-start:hover{ transform: translateY(-3px) scale(1.03); }
+@keyframes pulse-btn{
+  0%{ box-shadow: 0 0 0 0 rgba(255,201,60,.45); }
+  70%{ box-shadow: 0 0 0 16px rgba(255,201,60,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(255,201,60,0); }
+}
+.hero-socials{
+  margin-top: 46px;
+  display:flex; gap:14px;
+}
+.icon-btn{
+  width:42px; height:42px;
+  border-radius:10px;
+  background: var(--surface);
+  border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  transition: all .2s ease;
+  font-size: 18px;
+}
+.icon-btn:hover{ background: var(--accent); border-color: var(--accent); transform: translateY(-3px); }
+.scroll-hint{
+  position:absolute; bottom: 28px; left:50%; transform:translateX(-50%);
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.scroll-hint .line{ width:1px; height:34px; background: linear-gradient(var(--accent), transparent); animation: scrolldown 1.6s infinite; }
+@keyframes scrolldown{ 0%{ transform:scaleY(0); transform-origin:top;} 50%{transform:scaleY(1); transform-origin:top;} 51%{transform-origin:bottom;} 100%{transform:scaleY(0); transform-origin:bottom;} }
+
+/* ============ LEVEL SECTIONS ============ */
+.level{
+  position:relative; z-index:1;
+  padding: 130px 0 60px;
+  border-top: 1px solid var(--line);
+}
+.level-head{
+  display:flex; align-items:baseline; gap:18px; margin-bottom: 56px; flex-wrap:wrap;
+}
+.level-num{
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.level-head h2{ font-size: clamp(2rem, 4.5vw, 3rem); }
+
+/* ---- About ---- */
+.about-grid{
+  display:grid; grid-template-columns: 260px 1fr; gap: 60px; align-items:start;
+}
+.avatar-frame{
+  aspect-ratio: 1/1;
+  border-radius: var(--radius);
+  overflow:hidden;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  position:relative;
+}
+.avatar-frame img{ width:100%; height:100%; object-fit:cover; }
+.avatar-frame::after{
+  content: attr(data-badge);
+  position:absolute; bottom:10px; left:10px;
+  font-family: var(--font-mono); font-size:10px;
+  background: rgba(11,10,31,.85); border:1px solid var(--gold); color:var(--gold);
+  padding: 4px 8px; border-radius:6px;
+}
+.about-bio p{ color: var(--text-muted); margin-bottom: 16px; font-size: 1.02rem; }
+.stat-sheet{ margin-top: 34px; display:flex; flex-direction:column; gap: 16px; }
+.stat-row{ display:grid; grid-template-columns: 150px 1fr 40px; align-items:center; gap: 14px; }
+.stat-name{ font-family: var(--font-mono); font-size: 12.5px; color: var(--text-muted); }
+.stat-track{ height:8px; background: var(--surface); border-radius:6px; overflow:hidden; border:1px solid var(--line); }
+.stat-fill{ height:100%; width:0%; border-radius:6px; background: linear-gradient(90deg, var(--accent), var(--mint)); transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
+.stat-val{ font-family: var(--font-mono); font-size:12px; color: var(--text-dim); text-align:right; }
+
+/* ---- Projects ---- */
+.project-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 26px; }
+.game-card{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow:hidden;
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  display:flex; flex-direction:column;
+}
+.game-card:hover{ transform: translateY(-6px); border-color: var(--accent); box-shadow: 0 18px 40px -18px rgba(140,107,255,.5); }
+.game-cover{ position:relative; aspect-ratio: 16/10; overflow:hidden; background:#0000; }
+.game-cover img{ width:100%; height:100%; object-fit:cover; transition: transform .4s ease, filter .4s ease; }
+.game-card:hover .game-cover img{ transform: scale(1.06); }
+.game-cover::after{
+  content:""; position:absolute; inset:0;
+  background: repeating-linear-gradient(180deg, rgba(0,0,0,.15) 0 2px, transparent 2px 4px);
+  mix-blend-mode: overlay; opacity:.5; pointer-events:none;
+}
+.trailer-btn{
+  position:absolute; inset:0; margin:auto; width:52px; height:52px;
+  border-radius:50%; background: rgba(11,10,31,.75); border: 1px solid var(--gold);
+  color: var(--gold); font-size: 18px; display:flex; align-items:center; justify-content:center;
+  opacity:0; transition: opacity .2s ease;
+}
+.game-cover:hover .trailer-btn{ opacity:1; }
+.game-body{ padding: 20px 22px 22px; display:flex; flex-direction:column; gap:12px; flex:1; }
+.game-tags{ display:flex; gap:8px; flex-wrap:wrap; }
+.tag-chip{
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing:.4px;
+  color: var(--mint); background: rgba(52,226,184,.1); border:1px solid rgba(52,226,184,.3);
+  padding: 3px 9px; border-radius: 20px; text-transform:uppercase;
+}
+.game-body h3{ font-size: 1.25rem; }
+.game-body p{ color: var(--text-muted); font-size: .92rem; flex:1; }
+.game-links{ display:flex; gap:10px; margin-top: 6px; flex-wrap:wrap; }
+.pill-btn{
+  font-family: var(--font-mono); font-size: 11.5px;
+  border: 1px solid var(--line); padding: 8px 14px; border-radius:8px;
+  color: var(--text); transition: all .2s ease;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.pill-btn:hover{ background: var(--accent); border-color: var(--accent); }
+.pill-btn.ghost:hover{ background: var(--surface-2); }
+
+/* ---- Skills / Inventory ---- */
+.inv-category{ margin-bottom: 34px; }
+.inv-category h3{
+  font-family: var(--font-mono); font-size: 13px; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+}
+.inv-grid{ display:flex; flex-wrap:wrap; gap: 12px; }
+.inv-slot{
+  width: 76px; height: 76px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap: 6px;
+  font-size: 22px;
+  position:relative;
+  transition: all .2s ease;
+}
+.inv-slot:hover{ border-color: var(--accent); background: var(--surface-2); transform: translateY(-3px); }
+.inv-slot span.lbl{
+  font-family: var(--font-mono); font-size: 8.5px; color: var(--text-dim); text-align:center; padding:0 4px; line-height:1.2;
+}
+
+/* ---- Contact / Save screen ---- */
+.save-screen{
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 54px;
+  display:grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items:center;
+}
+.save-left h2{ font-size: clamp(1.8rem,4vw,2.6rem); margin-bottom:14px; }
+.save-left p{ color: var(--text-muted); margin-bottom: 26px; }
+.contact-list{ display:flex; flex-direction:column; gap: 14px; margin-bottom: 30px; }
+.contact-item{ display:flex; align-items:center; gap:12px; font-family: var(--font-mono); font-size: 13.5px; color: var(--text-muted); }
+.contact-item b{ color: var(--text); font-weight:500; }
+.cta-row{ display:flex; gap: 12px; flex-wrap:wrap; }
+.btn-primary{
+  background: var(--accent); color:#fff; padding: 14px 26px; border-radius: 10px;
+  font-weight:600; font-size:.95rem; transition: all .2s ease; display:inline-flex; align-items:center; gap:8px;
+}
+.btn-primary:hover{ background:#7a58ff; transform: translateY(-2px); }
+.btn-outline{
+  border:1px solid var(--line); padding:14px 26px; border-radius:10px; font-size:.95rem; transition: all .2s ease;
+}
+.btn-outline:hover{ border-color: var(--accent); background: var(--surface); }
+.qr-box{
+  background: var(--surface); border: 1px dashed var(--line); border-radius: 16px;
+  padding: 26px; text-align:center;
+}
+.qr-box img{ margin: 0 auto 14px; border-radius: 8px; background:#fff; padding:8px; }
+.qr-box p{ font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-bottom: 12px; }
+.qr-edit{
+  display:flex; gap:8px; margin-top:10px;
+}
+.qr-edit input{
+  flex:1; background: var(--bg); border:1px solid var(--line); border-radius:8px;
+  color: var(--text); font-family: var(--font-mono); font-size:11.5px; padding: 9px 10px;
+}
+.qr-edit button{ background: var(--mint); color:#0b0a1f; padding: 0 14px; border-radius:8px; font-size:11px; font-family:var(--font-mono); font-weight:700; }
+
+@media (max-width: 880px){
+  .about-grid{ grid-template-columns: 1fr; }
+  .avatar-frame{ max-width: 220px; }
+  .save-screen{ grid-template-columns: 1fr; padding: 32px 24px; }
+  .level{ padding: 90px 0 40px; }
+}
+
+footer{
+  position:relative; z-index:1;
+  text-align:center; padding: 40px 20px 110px;
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--text-dim);
+}
+
+/* Toast de logro */
+#achievement-toast{
+  position: fixed; left: 20px; bottom: 20px; z-index: 80;
+  background: var(--bg-elevated); border:1px solid var(--gold);
+  border-radius: 12px; padding: 14px 18px;
+  display:flex; align-items:center; gap:12px;
+  transform: translateY(140%); transition: transform .4s cubic-bezier(.2,.8,.2,1);
+  max-width: 300px;
+  box-shadow: 0 20px 40px -14px rgba(0,0,0,.6);
+}
+#achievement-toast.show{ transform: translateY(0); }
+#achievement-toast .ico{ font-size: 22px; }
+#achievement-toast .txt b{ display:block; font-family: var(--font-mono); font-size:10px; color: var(--gold); letter-spacing:.5px; margin-bottom:3px; }
+#achievement-toast .txt span{ font-size: 12.5px; color: var(--text-muted); }
+
+/* Modal trailer */
+.modal-overlay{
+  position: fixed; inset:0; background: rgba(6,5,18,.88); backdrop-filter: blur(4px);
+  z-index: 100; display:none; align-items:center; justify-content:center; padding: 24px;
+}
+.modal-overlay.open{ display:flex; }
+.modal-box{ width:100%; max-width: 820px; }
+.modal-box .frame{ position:relative; padding-top:56.25%; border-radius: 12px; overflow:hidden; border:1px solid var(--line); }
+.modal-box iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+.modal-close{
+  display:block; margin: 14px auto 0; font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-muted); border:1px solid var(--line); padding: 8px 16px; border-radius: 8px;
+}
+.modal-close:hover{ color: var(--text); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<!-- ===== NAV / MAPA DE MUNDO (se genera automáticamente desde CONFIG.secciones) ===== -->
+<nav class="world-nav" id="worldNav">
+  <svg><line class="path-line" x1="1" y1="0" x2="1" y2="100%"/><line class="path-progress" id="pathProgress" x1="1" y1="0" x2="1" y2="100%"/></svg>
+  <div class="player-marker" id="playerMarker"></div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<header class="hero" id="inicio">
+  <div class="tag" id="heroTag">DISPONIBLE PARA NUEVOS PROYECTOS</div>
+  <h1 id="heroName">TU NOMBRE</h1>
+  <div class="role" id="heroRole">Game Developer<span class="cursor">_</span></div>
+  <p class="tagline" id="heroTagline">Edita este texto en CONFIG.hero.tagline dentro del código.</p>
+  <a href="#proyectos" class="press-start">▶ PRESS START</a>
+  <div class="hero-socials" id="heroSocials"></div>
+  <div class="scroll-hint"><span>SCROLL</span><span class="line"></span></div>
+</header>
+
+<main>
+  <!-- ===== ABOUT ===== -->
+  <section class="level" id="about">
+    <div class="wrap">
+      <div class="level-head"><span class="level-num">MUNDO 01</span><h2>Sobre mí</h2></div>
+      <div class="about-grid">
+        <div class="avatar-frame" data-badge="LV. 99" id="avatarFrame">
+          <img id="avatarImg" src="" alt="Foto de perfil">
+        </div>
+        <div>
+          <div class="about-bio" id="bioText"></div>
+          <div class="stat-sheet" id="statSheet"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROYECTOS ===== -->
+  <section class="level" id="proyectos">
+    <div class="wrap">
+      <div class="level-head"><span class="level-num">MUNDO 02</span><h2>Proyectos</h2></div>
+      <div class="project-grid" id="projectGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===== SKILLS ===== -->
+  <section class="level" id="skills">
+    <div class="wrap">
+      <div class="level-head"><span class="level-num">MUNDO 03</span><h2>Inventario de habilidades</h2></div>
+      <div id="inventory"></div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACTO ===== -->
+  <section class="level" id="contacto">
+    <div class="wrap">
+      <div class="level-head"><span class="level-num">MUNDO 04</span><h2>Guardar partida</h2></div>
+      <div class="save-screen">
+        <div class="save-left">
+          <h2>¿Continuamos la historia?</h2>
+          <p id="contactIntro">Editable en CONFIG.contacto.intro</p>
+          <div class="contact-list" id="contactList"></div>
+          <div class="cta-row">
+            <a class="btn-primary" id="ctaEmail" href="#">✉ Escribir un email</a>
+            <a class="btn-outline" id="ctaCv" href="#" target="_blank" rel="noopener">Descargar CV</a>
+          </div>
+        </div>
+        <div class="qr-box">
+          <p>ESCANEA PARA VER ESTE PORTAFOLIO</p>
+          <img id="qrImg" src="" alt="Código QR del portafolio" width="180" height="180">
+          <div class="qr-edit">
+            <input id="qrInput" type="text" placeholder="Pega aquí la URL de tu portafolio">
+            <button id="qrBtn">Generar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="footerText"></footer>
+
+<div id="achievement-toast">
+  <div class="ico">🏆</div>
+  <div class="txt"><b>LOGRO DESBLOQUEADO</b><span id="toastMsg">Sección explorada</span></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="frame"><iframe id="modalIframe" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+    <button class="modal-close" id="modalClose">CERRAR ✕</button>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   CONFIG — EDITA AQUÍ TODO EL CONTENIDO DEL PORTAFOLIO
+   No necesitas tocar el HTML/CSS: cambia estos valores y listo.
+   ================================================================ */
+const CONFIG = {
+
+  hero: {
+    tagAvailability: "DISPONIBLE PARA NUEVOS PROYECTOS",
+    nombre: "ALEX RIVERA",
+    rol: "Game Developer & Diseñador",
+    tagline: "Creo mundos jugables desde cero: gameplay, sistemas, arte técnico y ese pequeño detalle que hace que un juego se sienta bien. Actualmente explorando roguelikes y físicas 2D.",
+  },
+
+  // Redes sociales que aparecen en el hero y en el pie de página
+  socials: [
+    { icon: "🐙", label: "GitHub", url: "https://github.com/tu-usuario" },
+    { icon: "🕹️", label: "itch.io", url: "https://tu-usuario.itch.io" },
+    { icon: "💼", label: "LinkedIn", url: "https://linkedin.com/in/tu-usuario" },
+    { icon: "🐦", label: "X / Twitter", url: "https://x.com/tu-usuario" },
+  ],
+
+  avatar: {
+    // Reemplaza por la URL de tu propia foto (cuadrada funciona mejor)
+    src: "https://placehold.co/400x400/1c1839/8c6bff?text=TU+FOTO",
+    badge: "LV. 99",
+  },
+
+  bio: [
+    "Soy desarrollador de videojuegos con 5 años de experiencia creando prototipos, jams y proyectos completos en Unity y Godot. Me obsesiona el 'game feel': ese momento en que los controles simplemente se sienten correctos.",
+    "Antes trabajé como programador de gameplay en un estudio indie, donde lideré la implementación de sistemas de combate e IA. Fuera del código, disfruto el pixel art y participar en game jams los fines de semana."
+  ],
+
+  // Barras de estadísticas tipo hoja de personaje (0-100)
+  stats: [
+    { label: "Programación", value: 92 },
+    { label: "Diseño de niveles", value: 80 },
+    { label: "Game Design", value: 85 },
+    { label: "Arte / Pixel Art", value: 55 },
+    { label: "Audio", value: 40 },
+    { label: "Producción", value: 70 },
+  ],
+
+  // Proyectos — agrega, edita o borra objetos de esta lista libremente
+  proyectos: [
+    {
+      titulo: "VOID RUNNER",
+      tags: ["Roguelike", "Unity", "2D"],
+      descripcion: "Roguelike de acción con generación procedural de niveles y un sistema de armas modular. +40k descargas en itch.io.",
+      imagen: "https://placehold.co/600x375/241f4a/34e2b8?text=VOID+RUNNER",
+      video: "", // ID de YouTube, ej: "dQw4w9WgXcQ" — déjalo vacío si no hay trailer
+      linkJugar: "https://tu-usuario.itch.io/void-runner",
+      linkCodigo: "https://github.com/tu-usuario/void-runner",
+    },
+    {
+      titulo: "ECHOES OF PIXEL VALLEY",
+      tags: ["Aventura", "Godot", "Pixel Art"],
+      descripcion: "Aventura narrativa en pixel art sobre memoria y pérdida. Diseñé el sistema de diálogos ramificados y la dirección de arte.",
+      imagen: "https://placehold.co/600x375/241f4a/ffc93c?text=PIXEL+VALLEY",
+      video: "",
+      linkJugar: "https://tu-usuario.itch.io/pixel-valley",
+      linkCodigo: "https://github.com/tu-usuario/pixel-valley",
+    },
+    {
+      titulo: "GRAVITY SMASH",
+      tags: ["Party Game", "Unreal", "Multijugador"],
+      descripcion: "Juego de fiesta local para 4 jugadores basado en física de gravedad variable. Premiado en Ludum Dare 55.",
+      imagen: "https://placehold.co/600x375/241f4a/ff5c87?text=GRAVITY+SMASH",
+      video: "",
+      linkJugar: "https://tu-usuario.itch.io/gravity-smash",
+      linkCodigo: "https://github.com/tu-usuario/gravity-smash",
+    },
+  ],
+
+  // Inventario de habilidades técnicas, agrupadas por categoría
+  inventario: {
+    "Lenguajes": [
+      { icon:"💻", label:"C#" }, { icon:"🐍", label:"Python" }, { icon:"📜", label:"GDScript" }, { icon:"🌐", label:"JavaScript" }
+    ],
+    "Motores": [
+      { icon:"🎮", label:"Unity" }, { icon:"🧩", label:"Godot" }, { icon:"🏗️", label:"Unreal" }
+    ],
+    "Herramientas": [
+      { icon:"🎨", label:"Aseprite" }, { icon:"🌀", label:"Blender" }, { icon:"🔊", label:"FMOD" }, { icon:"🗂️", label:"Git" }
+    ],
+  },
+
+  contacto: {
+    intro: "Escríbeme si tienes un proyecto, una vacante o simplemente quieres hablar de diseño de juegos. Suelo responder en menos de 48 horas.",
+    email: "tu-email@ejemplo.com",
+    ubicacion: "Santiago, Chile — disponible remoto",
+    disponibilidad: "Freelance & tiempo completo",
+    cvUrl: "#", // pon aquí el link a tu CV en PDF
+  },
+
+  // URL que se codifica en el QR — reemplázala por el link real a tu portafolio publicado
+  qrUrl: "https://tu-portafolio.com",
+
+  footer: "Hecho con HTML, CSS y JS — sin frameworks. © " + new Date().getFullYear(),
+};
+
+/* ================================================================
+   RENDERIZADO — no necesitas editar nada de aquí en adelante
+   ================================================================ */
+
+// ---- Hero ----
+document.getElementById('heroTag').textContent = CONFIG.hero.tagAvailability;
+document.getElementById('heroName').textContent = CONFIG.hero.nombre;
+document.getElementById('heroRole').innerHTML = CONFIG.hero.rol + '<span class="cursor">_</span>';
+document.getElementById('heroTagline').textContent = CONFIG.hero.tagline;
+document.title = CONFIG.hero.nombre + " · Portafolio";
+
+function renderSocials(container, iconOnly){
+  CONFIG.socials.forEach(s=>{
+    const a = document.createElement('a');
+    a.href = s.url; a.target="_blank"; a.rel="noopener";
+    a.className = "icon-btn"; a.title = s.label;
+    a.innerHTML = s.icon;
+    container.appendChild(a);
+  });
+}
+renderSocials(document.getElementById('heroSocials'));
+
+// ---- About ----
+document.getElementById('avatarImg').src = CONFIG.avatar.src;
+document.getElementById('avatarFrame').setAttribute('data-badge', CONFIG.avatar.badge);
+document.getElementById('bioText').innerHTML = CONFIG.bio.map(p=>`<p>${p}</p>`).join('');
+
+const statSheet = document.getElementById('statSheet');
+CONFIG.stats.forEach(s=>{
+  const row = document.createElement('div');
+  row.className = 'stat-row';
+  row.innerHTML = `<span class="stat-name">${s.label}</span>
+    <span class="stat-track"><span class="stat-fill" data-val="${s.value}"></span></span>
+    <span class="stat-val">${s.value}</span>`;
+  statSheet.appendChild(row);
+});
+
+// ---- Proyectos ----
+const grid = document.getElementById('projectGrid');
+CONFIG.proyectos.forEach(p=>{
+  const card = document.createElement('article');
+  card.className = 'game-card';
+  card.innerHTML = `
+    <div class="game-cover">
+      <img src="${p.imagen}" alt="Captura de ${p.titulo}" loading="lazy">
+      ${p.video ? `<button class="trailer-btn" data-video="${p.video}" title="Ver trailer">▶</button>` : ''}
+    </div>
+    <div class="game-body">
+      <div class="game-tags">${p.tags.map(t=>`<span class="tag-chip">${t}</span>`).join('')}</div>
+      <h3>${p.titulo}</h3>
+      <p>${p.descripcion}</p>
+      <div class="game-links">
+        ${p.linkJugar ? `<a class="pill-btn" href="${p.linkJugar}" target="_blank" rel="noopener">▶ Jugar</a>`:''}
+        ${p.linkCodigo ? `<a class="pill-btn ghost" href="${p.linkCodigo}" target="_blank" rel="noopener">⟨/⟩ Código</a>`:''}
+      </div>
+    </div>`;
+  grid.appendChild(card);
+});
+
+// Modal de trailer
+const overlay = document.getElementById('modalOverlay');
+const iframe = document.getElementById('modalIframe');
+document.querySelectorAll('.trailer-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    iframe.src = `https://www.youtube.com/embed/${btn.dataset.video}?autoplay=1`;
+    overlay.classList.add('open');
+  });
+});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+function closeModal(){ overlay.classList.remove('open'); iframe.src=''; }
+
+// ---- Inventario ----
+const inv = document.getElementById('inventory');
+Object.entries(CONFIG.inventario).forEach(([cat, items])=>{
+  const block = document.createElement('div');
+  block.className = 'inv-category';
+  block.innerHTML = `<h3>${cat}</h3><div class="inv-grid">${
+    items.map(i=>`<div class="inv-slot" tabindex="0" title="${i.label}"><span>${i.icon}</span><span class="lbl">${i.label}</span></div>`).join('')
+  }</div>`;
+  inv.appendChild(block);
+});
+
+// ---- Contacto ----
+document.getElementById('contactIntro').textContent = CONFIG.contacto.intro;
+document.getElementById('contactList').innerHTML = `
+  <div class="contact-item">✉ <b>${CONFIG.contacto.email}</b></div>
+  <div class="contact-item">📍 <b>${CONFIG.contacto.ubicacion}</b></div>
+  <div class="contact-item">🕐 <b>${CONFIG.contacto.disponibilidad}</b></div>
+`;
+document.getElementById('ctaEmail').href = `mailto:${CONFIG.contacto.email}`;
+document.getElementById('ctaCv').href = CONFIG.contacto.cvUrl;
+document.getElementById('footerText').textContent = CONFIG.footer;
+
+// ---- QR ----
+function setQr(url){
+  const encoded = encodeURIComponent(url);
+  document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=${encoded}`;
+}
+setQr(CONFIG.qrUrl);
+document.getElementById('qrInput').value = CONFIG.qrUrl;
+document.getElementById('qrBtn').addEventListener('click', ()=>{
+  const val = document.getElementById('qrInput').value.trim();
+  if(val) setQr(val);
+});
+
+// ================= MAPA DE MUNDO / NAV LATERAL =================
+const secciones = [
+  { id:'inicio', label:'INICIO' },
+  { id:'about', label:'SOBRE MÍ' },
+  { id:'proyectos', label:'PROYECTOS' },
+  { id:'skills', label:'INVENTARIO' },
+  { id:'contacto', label:'CONTACTO' },
+];
+const nav = document.getElementById('worldNav');
+secciones.forEach(s=>{
+  const a = document.createElement('a');
+  a.href = `#${s.id}`; a.className='node-btn'; a.dataset.id = s.id;
+  a.innerHTML = `<span class="node-dot"></span><span class="node-label">${s.label}</span>`;
+  nav.appendChild(a);
+});
+nav.appendChild(document.getElementById('playerMarker')); // reordenar al final para z-index
+
+const nodeButtons = [...document.querySelectorAll('.node-btn')];
+const sectionEls = secciones.map(s=>document.getElementById(s.id));
+
+function updateActiveNode(){
+  let current = sectionEls[0];
+  const scrollPos = window.scrollY + window.innerHeight * 0.4;
+  sectionEls.forEach(el=>{ if(el && el.offsetTop <= scrollPos) current = el; });
+  nodeButtons.forEach(btn=>btn.classList.toggle('active', btn.dataset.id === current.id));
+
+  // marcador jugador + progreso de línea (solo escritorio)
+  if(window.innerWidth > 880){
+    const idx = sectionEls.indexOf(current);
+    const total = nodeButtons.length - 1;
+    const btnRect = nodeButtons[idx]?.getBoundingClientRect();
+    const navRect = nav.getBoundingClientRect();
+    if(btnRect){
+      const top = btnRect.top - navRect.top + btnRect.height/2 - 5;
+      document.getElementById('playerMarker').style.top = top + 'px';
+    }
+    const pct = idx/total;
+    const progressLine = document.getElementById('pathProgress');
+    const navHeight = nav.getBoundingClientRect().height;
+    progressLine.setAttribute('y2', (pct*navHeight) + 'px');
+  }
+}
+window.addEventListener('scroll', updateActiveNode, { passive:true });
+window.addEventListener('resize', updateActiveNode);
+updateActiveNode();
+
+// ================= ANIMACIONES AL HACER SCROLL =================
+const seen = new Set();
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      // animar barras de stats
+      entry.target.querySelectorAll('.stat-fill').forEach(f=>{
+        f.style.width = f.dataset.val + '%';
+      });
+      // logro desbloqueado (una vez por sección, no en el hero)
+      if(entry.target.tagName === 'SECTION' && !seen.has(entry.target.id)){
+        seen.add(entry.target.id);
+        if(seen.size > 1){ // evita disparar en la primera sección vista al cargar
+          showAchievement(entry.target.id);
+        }
+      }
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.level').forEach(el=>io.observe(el));
+
+const achievementNames = {
+  about: "Descubriste la historia del héroe",
+  proyectos: "Accediste a la biblioteca de juegos",
+  skills: "Abriste el inventario",
+  contacto: "Llegaste a la pantalla de guardado",
+};
+let toastTimer;
+function showAchievement(id){
+  const toast = document.getElementById('achievement-toast');
+  document.getElementById('toastMsg').textContent = achievementNames[id] || 'Nueva sección explorada';
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove('show'), 3200);
+}
+
+// ================= FONDO ESTRELLADO (canvas) =================
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = document.body.scrollHeight;
+  const count = Math.floor((canvas.width * 900) / 9000);
+  stars = Array.from({length: count}, ()=>({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    r: Math.random()*1.4 + 0.3,
+    s: Math.random()*0.4 + 0.05,
+    o: Math.random()*0.6 + 0.2,
+  }));
+}
+function drawStars(){
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  ctx.fillStyle = '#ffffff';
+  stars.forEach(st=>{
+    ctx.globalAlpha = st.o;
+    ctx.beginPath();
+    ctx.arc(st.x, st.y, st.r, 0, Math.PI*2);
+    ctx.fill();
+    if(!reduceMotion){ st.y += st.s; if(st.y > canvas.height) st.y = 0; }
+  });
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(drawStars);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+drawStars();
+</script>
+</body>
+</html>
